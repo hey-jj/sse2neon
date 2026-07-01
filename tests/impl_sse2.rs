@@ -241,6 +241,8 @@ fn double_compares_and_movemask() {
 
 #[test]
 fn cvt_roundtrip_int_double() {
+    let original = _MM_GET_ROUNDING_MODE();
+    _MM_SET_ROUNDING_MODE(_MM_ROUND_NEAREST);
     let i = _mm_set_epi32(0, 0, 7, 3);
     let d = f64x2(_mm_cvtepi32_pd(i));
     assert_eq!(d, [3.0, 7.0]);
@@ -248,6 +250,18 @@ fn cvt_roundtrip_int_double() {
     // round half to even: 2.5->2, 7.5->8
     assert_eq!(back[0], 2);
     assert_eq!(back[1], 8);
+    _MM_SET_ROUNDING_MODE(original);
+}
+
+#[test]
+fn cvttpd_truncates_toward_zero() {
+    // Truncation ignores the rounding mode and always drops the fraction.
+    let original = _MM_GET_ROUNDING_MODE();
+    _MM_SET_ROUNDING_MODE(_MM_ROUND_UP);
+    let r = i32x4(_mm_cvttpd_epi32(_mm_set_pd(-2.7, 2.7)));
+    assert_eq!(r[0], 2); // 2.7 -> 2
+    assert_eq!(r[1], -2); // -2.7 -> -2, toward zero
+    _MM_SET_ROUNDING_MODE(original);
 }
 
 #[test]
@@ -258,4 +272,106 @@ fn cvt_saturation_indefinite() {
     assert_eq!(i32x4(_mm_cvtps_epi32(inf))[0], i32::MIN);
     let nan = _mm_set1_ps(f32::NAN);
     assert_eq!(i32x4(_mm_cvttps_epi32(nan))[0], i32::MIN);
+}
+
+// --- Saturating add/sub across widths (both saturation directions) ---
+
+#[test]
+fn saturating_subs_and_adds_extra_widths() {
+    // Signed 8-bit underflow clamps to i8::MIN.
+    assert_eq!(
+        i8x16(_mm_subs_epi8(_mm_set1_epi8(-100), _mm_set1_epi8(100)))[0],
+        -128
+    );
+    // Signed 8-bit overflow clamps to i8::MAX.
+    assert_eq!(
+        i8x16(_mm_subs_epi8(_mm_set1_epi8(100), _mm_set1_epi8(-100)))[0],
+        127
+    );
+
+    // Signed 16-bit overflow clamps to i16::MAX.
+    assert_eq!(
+        i16x8(_mm_subs_epi16(
+            _mm_set1_epi16(30000),
+            _mm_set1_epi16(-30000)
+        ))[0],
+        32767
+    );
+    // Signed 16-bit underflow clamps to i16::MIN.
+    assert_eq!(
+        i16x8(_mm_subs_epi16(
+            _mm_set1_epi16(-30000),
+            _mm_set1_epi16(30000)
+        ))[0],
+        -32768
+    );
+
+    // Unsigned 16-bit subtract floors at zero.
+    assert_eq!(
+        u16x8(_mm_subs_epu16(_mm_set1_epi16(10), _mm_set1_epi16(50)))[0],
+        0
+    );
+    // Unsigned 16-bit add ceils at u16::MAX.
+    let sixty_k = _mm_set1_epi16(60000u16 as i16);
+    let ten_k = _mm_set1_epi16(10000);
+    assert_eq!(u16x8(_mm_adds_epu16(sixty_k, ten_k))[0], 65535);
+}
+
+// --- Widening and high-half multiplies ---
+
+#[test]
+fn widening_multiplies() {
+    // mul_epu32 reads epi32 lanes 0 and 2 of each input.
+    let a = _mm_set_epi32(0, 7, 0, 0xFFFFFFFFu32 as i32);
+    let b = _mm_set_epi32(0, 3, 0, 2);
+    let r = u64x2(_mm_mul_epu32(a, b));
+    assert_eq!(r, [0x1_FFFF_FFFE, 21]); // 0xFFFFFFFF*2, 7*3
+
+    // mul_epi32 signed, same lane selection.
+    let a = _mm_set_epi32(0, 7, 0, -1);
+    let b = _mm_set_epi32(0, 3, 0, 3);
+    assert_eq!(i64x2(_mm_mul_epi32(a, b)), [-3, 21]);
+}
+
+#[test]
+fn high_half_multiplies_signed_vs_unsigned() {
+    // 0x4000 * 0x4000 = 0x1000_0000, high 16 bits = 0x1000.
+    let a = _mm_set1_epi16(0x4000);
+    assert_eq!(u16x8(_mm_mulhi_epi16(a, a))[0], 0x1000);
+
+    // 0xFFFF * 0xFFFF = 0xFFFE_0001. Unsigned high = 0xFFFE.
+    let ones = _mm_set1_epi16(-1); // 0xFFFF
+    assert_eq!(u16x8(_mm_mulhi_epu16(ones, ones))[0], 0xFFFE);
+    // Signed: (-1)*(-1) = 1, high 16 bits = 0.
+    assert_eq!(i16x8(_mm_mulhi_epi16(ones, ones))[0], 0);
+
+    // mullo keeps the low 16 bits.
+    let x = _mm_set1_epi16(0x1234);
+    let y = _mm_set1_epi16(0x0010);
+    assert_eq!(u16x8(_mm_mullo_epi16(x, y))[0], 0x2340);
+}
+
+// --- Half-lane shuffles leave the other half alone ---
+
+#[test]
+fn shuffle_hi_lo_epi16() {
+    let s = _mm_set_epi16(8, 7, 6, 5, 4, 3, 2, 1); // lane0..7 = 1..8
+                                                   // Reverse the low four, keep the high four.
+    let lo = i16x8(_mm_shufflelo_epi16::<{ _MM_SHUFFLE(0, 1, 2, 3) }>(s));
+    assert_eq!(lo, [4, 3, 2, 1, 5, 6, 7, 8]);
+    // Reverse the high four, keep the low four.
+    let hi = i16x8(_mm_shufflehi_epi16::<{ _MM_SHUFFLE(0, 1, 2, 3) }>(s));
+    assert_eq!(hi, [1, 2, 3, 4, 8, 7, 6, 5]);
+}
+
+#[test]
+fn valid_immediates_compile_and_run() {
+    // Const-generic immediates carry a compile-time range assert. Confirm that
+    // valid values in range still monomorphize and produce the right lane.
+    let a = _mm_set_epi32(4, 3, 2, 1);
+    assert_eq!(i32x4(_mm_shuffle_epi32::<255>(a))[0], 4); // top of 0..256
+    assert_eq!(i32x4(_mm_slli_epi32::<0>(a))[0], 1); // bottom of 0..256
+    assert_eq!(i32x4(_mm_slli_epi32::<255>(a))[0], 0); // count >= width -> 0
+    assert_eq!(i32x4(_mm_srai_epi32::<255>(_mm_set1_epi32(-16)))[0], -1);
+    assert_eq!(_mm_extract_epi32::<3>(a), 4); // top lane index
 }

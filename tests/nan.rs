@@ -129,3 +129,22 @@ fn min_max_default_propagates_nan() {
     assert!(f32x4(_mm_min_ps(nan, x))[0].is_nan());
     assert!(f32x4(_mm_max_ps(nan, x))[0].is_nan());
 }
+
+#[test]
+fn min_max_pd_default_propagates_nan() {
+    // Double-precision min/max use the NEON default path, which propagates a NaN
+    // operand. This diverges from x86 MINPD/MAXPD, which return the second
+    // operand on an unordered compare. The choice matches the _ps path.
+    let nan = _mm_set1_pd(qnan64());
+    let x = _mm_set1_pd(5.0);
+    assert!(f64x2(_mm_min_pd(nan, x))[0].is_nan());
+    assert!(f64x2(_mm_max_pd(nan, x))[0].is_nan());
+}
+
+#[test]
+fn min_max_pd_never_invent_nan_from_finite() {
+    let a = _mm_set1_pd(3.0);
+    let b = _mm_set1_pd(5.0);
+    assert_eq!(f64x2(_mm_min_pd(a, b))[0], 3.0);
+    assert_eq!(f64x2(_mm_max_pd(a, b))[0], 5.0);
+}

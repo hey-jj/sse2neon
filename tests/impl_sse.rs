@@ -117,6 +117,59 @@ fn scalar_ss_upper_lanes() {
 }
 
 #[test]
+fn scalar_ss_arithmetic_upper_lanes() {
+    let a = _mm_set_ps(4.0, 3.0, 2.0, 1.0);
+    let b = _mm_set_ps(40.0, 30.0, 20.0, 10.0);
+    // lane0 gets the op, lanes 1-3 come from a.
+    assert_eq!(f32x4(_mm_sub_ss(a, b)), [-9.0, 2.0, 3.0, 4.0]);
+    assert_eq!(f32x4(_mm_div_ss(a, b)), [0.1, 2.0, 3.0, 4.0]);
+
+    let s = _mm_set_ps(4.0, 3.0, 2.0, 16.0);
+    assert_eq!(f32x4(_mm_sqrt_ss(s)), [4.0, 2.0, 3.0, 4.0]);
+}
+
+#[test]
+fn scalar_ss_min_max_with_nan() {
+    let a = _mm_set_ps(4.0, 3.0, 2.0, 1.0);
+    let b = _mm_set_ss(f32::NAN);
+    // x86 min_ss/max_ss return the second operand on an unordered compare.
+    assert!(f32x4(_mm_min_ss(a, b))[0].is_nan());
+    assert_eq!(&f32x4(_mm_min_ss(a, b))[1..], &[2.0, 3.0, 4.0]);
+    assert!(f32x4(_mm_max_ss(a, b))[0].is_nan());
+    assert_eq!(&f32x4(_mm_max_ss(a, b))[1..], &[2.0, 3.0, 4.0]);
+}
+
+#[test]
+fn scalar_ss_compare_upper_lanes() {
+    // cmpord_ss: lane0 all-ones if both ordered, else zero. Upper from a.
+    let n = _mm_set_ps(4.0, 3.0, 2.0, f32::NAN);
+    let m = _mm_set_ps(40.0, 30.0, 20.0, 10.0);
+    let r = f32x4(_mm_cmpord_ss(n, m));
+    assert_eq!(r[0].to_bits(), 0); // NaN makes lane0 unordered
+    assert_eq!(&r[1..], &[2.0, 3.0, 4.0]);
+
+    // cmpeq_ss: lane0 equal -> all-ones bit pattern.
+    let a = _mm_set_ps(4.0, 3.0, 2.0, 5.0);
+    let b = _mm_set_ps(40.0, 30.0, 20.0, 5.0);
+    let r = f32x4(_mm_cmpeq_ss(a, b));
+    assert_eq!(r[0].to_bits(), 0xFFFF_FFFF);
+    assert_eq!(&r[1..], &[2.0, 3.0, 4.0]);
+}
+
+#[test]
+fn round_ss_upper_lanes() {
+    let a = _mm_set_ps(4.0, 3.0, 2.0, 1.0);
+    let b = _mm_set_ps(40.0, 30.0, 20.0, 2.7);
+    // lane0 truncates 2.7 to 2, upper lanes from a.
+    assert_eq!(
+        f32x4(_mm_round_ss::<_MM_FROUND_TO_ZERO>(a, b)),
+        [2.0, 2.0, 3.0, 4.0]
+    );
+    assert_eq!(f32x4(_mm_floor_ss(a, b)), [2.0, 2.0, 3.0, 4.0]);
+    assert_eq!(f32x4(_mm_ceil_ss(a, b)), [3.0, 2.0, 3.0, 4.0]);
+}
+
+#[test]
 fn move_masks() {
     let a = _mm_set_ps(-1.0, 2.0, -3.0, 4.0);
     // lane0=4(+), lane1=-3(sign), lane2=2(+), lane3=-1(sign) -> bits 1 and 3 = 0b1010

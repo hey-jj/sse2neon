@@ -196,3 +196,82 @@ fn popcnt_known_answers() {
     assert_eq!(_mm_popcnt_u64(u64::MAX), 64);
     assert_eq!(_mm_popcnt_u64(0x0F0F_0F0F_0F0F_0F0F), 32);
 }
+
+#[test]
+fn dot_product_ps_masking() {
+    let a = _mm_set_ps(4.0, 3.0, 2.0, 1.0);
+    let b = _mm_set_ps(8.0, 7.0, 6.0, 5.0);
+    // Input mask 0x3 selects lanes 0 and 1: 1*5 + 2*6 = 17, broadcast everywhere.
+    assert_eq!(f32x4(_mm_dp_ps::<0x3F>(a, b)), [17.0, 17.0, 17.0, 17.0]);
+    // Empty input nibble returns all zeros.
+    assert_eq!(f32x4(_mm_dp_ps::<0x0F>(a, b)), [0.0, 0.0, 0.0, 0.0]);
+}
+
+#[test]
+fn dot_product_ps_masked_nan_does_not_poison() {
+    let a = _mm_set_ps(4.0, 3.0, 2.0, f32::NAN);
+    let b = _mm_set_ps(8.0, 7.0, 6.0, 5.0);
+    // Input mask 0xE selects lanes 1,2,3 (NaN lane 0 excluded).
+    // sum = 2*6 + 3*7 + 4*8 = 65, output mask 0x1 puts it in lane 0.
+    let r = f32x4(_mm_dp_ps::<0xE1>(a, b));
+    assert_eq!(r, [65.0, 0.0, 0.0, 0.0]);
+    assert!(!r[0].is_nan());
+}
+
+#[test]
+fn dot_product_pd_output_lane() {
+    let a = _mm_set_pd(2.0, 1.0);
+    let b = _mm_set_pd(4.0, 3.0);
+    // Input mask 0x3 sums both (1*3 + 2*4 = 11), output mask 0x2 -> lane 1.
+    assert_eq!(f64x2(_mm_dp_pd::<0x32>(a, b)), [0.0, 11.0]);
+}
+
+#[test]
+fn blend_and_blendv_pd() {
+    let a = _mm_set_pd(1.0, 2.0);
+    let b = _mm_set_pd(10.0, 20.0);
+    // blendv selects by the sign bit of each f64 mask lane.
+    let mask = _mm_set_pd(-1.0, 1.0);
+    assert_eq!(f64x2(_mm_blendv_pd(a, b, mask)), [2.0, 10.0]);
+    // blend_pd::<0b10> takes lane 1 from b, lane 0 from a.
+    assert_eq!(f64x2(_mm_blend_pd::<0b10>(a, b)), [2.0, 10.0]);
+}
+
+#[test]
+fn testnzc_mixed_and_uniform() {
+    let mixed = _mm_set_epi32(0, 0, -1, -1);
+    let ones = _mm_set1_epi32(-1);
+    // Mixed sets both the ZF and CF chains, so testnzc is 1.
+    assert_eq!(_mm_testnzc_si128(mixed, ones), 1);
+    // All ones: (a & ~b) is zero, so testnzc is 0.
+    assert_eq!(_mm_testnzc_si128(ones, ones), 0);
+}
+
+#[test]
+fn extract_epi16_zero_extends() {
+    let c = _mm_set_epi16(0, 0, 0, 0, 0, 0, 0, -1);
+    // -1 lane comes back as 0xFFFF (65535), not sign-extended -1.
+    assert_eq!(_mm_extract_epi16::<0>(c), 0xFFFF);
+}
+
+#[test]
+fn packus_epi32_saturates_to_u16() {
+    let p = _mm_set_epi32(70000, -5, 3, 65535);
+    let q = _mm_setzero_si128();
+    let r = u16x8(_mm_packus_epi32(p, q));
+    // 65535 stays, 3 stays, -5 clamps to 0, 70000 clamps to 65535.
+    assert_eq!(&r[..4], &[65535, 3, 0, 65535]);
+}
+
+#[test]
+fn two_step_widen_conversions() {
+    let bytes = _mm_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1);
+    assert_eq!(i32x4(_mm_cvtepi8_epi32(bytes))[0], -1); // sign extend
+    assert_eq!(u32x4(_mm_cvtepu8_epi32(bytes))[0], 255); // zero extend
+
+    let words = _mm_set_epi16(0, 0, 0, 0, 0, 0, 0, -1);
+    assert_eq!(u32x4(_mm_cvtepu16_epi32(words))[0], 0xFFFF);
+
+    let dwords = _mm_set_epi32(0, 0, 0, -1);
+    assert_eq!(u64x2(_mm_cvtepu32_epi64(dwords))[0], 0xFFFF_FFFF);
+}

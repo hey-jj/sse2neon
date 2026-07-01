@@ -227,3 +227,37 @@ fn clmul_low_low() {
     assert_eq!(r[0], 0b101);
     assert_eq!(r[1], 0);
 }
+
+#[test]
+fn keygenassist_nonzero_word_and_rotation() {
+    // Seed word 0x09cf4f3c in dword 3 (bytes 12..15), other bytes zero.
+    let a = _mm_set_epi32(0x09cf_4f3c, 0, 0, 0);
+    let r = u32x4(_mm_aeskeygenassist_si128::<0x01>(a));
+    // SubWord(0x09cf4f3c) = 0x018a84eb.
+    assert_eq!(r[2], 0x018a_84eb);
+    // RotWord moves each byte down one position: rotate_right(8) on the dword.
+    // 0x018a84eb.rotate_right(8) = 0xeb018a84, xor rcon 1 = 0xeb018a85.
+    assert_eq!(r[3], 0xeb01_8a85);
+}
+
+#[test]
+fn clmul_immediate_selects_halves() {
+    let a = _mm_set_epi64x(0xA, 0x3); // high lane 0xA, low lane 0x3
+    let b = _mm_set_epi64x(0xC, 0x5);
+    // 0x00: low a * low b = clmul(3, 5) = 0xF.
+    assert_eq!(u64x2(_mm_clmulepi64_si128::<0x00>(a, b)), [0xF, 0]);
+    // 0x01: high a * low b = clmul(0xA, 5) = 0x22.
+    assert_eq!(u64x2(_mm_clmulepi64_si128::<0x01>(a, b)), [0x22, 0]);
+    // 0x10: low a * high b = clmul(3, 0xC) = 0x14.
+    assert_eq!(u64x2(_mm_clmulepi64_si128::<0x10>(a, b)), [0x14, 0]);
+    // 0x11: high a * high b = clmul(0xA, 0xC) = 0x78.
+    assert_eq!(u64x2(_mm_clmulepi64_si128::<0x11>(a, b)), [0x78, 0]);
+}
+
+#[test]
+fn clmul_high_output_lane() {
+    // clmul of two all-ones 64-bit values fills both output lanes.
+    let w = _mm_set_epi64x(0, 0xFFFF_FFFF_FFFF_FFFFu64 as i64);
+    let r = u64x2(_mm_clmulepi64_si128::<0x00>(w, w));
+    assert_eq!(r, [0x5555_5555_5555_5555, 0x5555_5555_5555_5555]);
+}

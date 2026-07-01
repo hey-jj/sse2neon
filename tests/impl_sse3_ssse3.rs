@@ -128,3 +128,47 @@ fn alignr_epi8() {
                            // imm >= 32 -> zero
     assert_eq!(u8x16(_mm_alignr_epi8::<32>(a, b)), [0u8; 16]);
 }
+
+#[test]
+fn horizontal_sub_add_integer() {
+    let a16 = _mm_set_epi16(8, 7, 6, 5, 4, 3, 2, 1);
+    let b16 = _mm_set_epi16(80, 70, 60, 50, 40, 30, 20, 10);
+    // a: 1-2,3-4,5-6,7-8 then b: 10-20,30-40,50-60,70-80
+    assert_eq!(
+        i16x8(_mm_hsub_epi16(a16, b16)),
+        [-1, -1, -1, -1, -10, -10, -10, -10]
+    );
+
+    let a32 = _mm_set_epi32(4, 3, 2, 1);
+    let b32 = _mm_set_epi32(40, 30, 20, 10);
+    // a: 1-2,3-4 then b: 10-20,30-40
+    assert_eq!(i32x4(_mm_hsub_epi32(a32, b32)), [-1, -1, -10, -10]);
+    // a: 1+2,3+4 then b: 10+20,30+40
+    assert_eq!(i32x4(_mm_hadd_epi32(a32, b32)), [3, 7, 30, 70]);
+}
+
+#[test]
+fn hsub_pd_pairs() {
+    let a = _mm_set_pd(5.0, 2.0);
+    let b = _mm_set_pd(9.0, 4.0);
+    // lane0 = a[0]-a[1] = 2-5, lane1 = b[0]-b[1] = 4-9
+    assert_eq!(f64x2(_mm_hsub_pd(a, b)), [-3.0, -5.0]);
+}
+
+#[test]
+fn alignr_epi8_high_range() {
+    let a = _mm_set_epi8(
+        31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16,
+    );
+    let b = _mm_set_epi8(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+    // IMM=16 draws the whole a half.
+    assert_eq!(
+        u8x16(_mm_alignr_epi8::<16>(a, b)),
+        [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+    );
+    // IMM=18 draws from a then zero-fills past the end.
+    assert_eq!(
+        u8x16(_mm_alignr_epi8::<18>(a, b)),
+        [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, 0]
+    );
+}
