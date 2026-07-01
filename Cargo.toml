@@ -2,9 +2,13 @@
 name = "sse2neon"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.79"
 description = "x86 SSE-to-ARM NEON intrinsic compatibility shim"
 license = "MIT"
 repository = "https://github.com/hey-jj/sse2neon"
+documentation = "https://docs.rs/sse2neon"
 readme = "README.md"
+keywords = ["simd", "neon", "sse", "aarch64", "intrinsics"]
+categories = ["hardware-support", "no-std"]
 
 [dependencies]

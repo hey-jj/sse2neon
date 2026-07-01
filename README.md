@@ -8,10 +8,16 @@ SSE4.1, SSE4.2, AES, and CRC32C can call these functions and get matching lane
 semantics on AArch64. Lane ordering, saturation, NaN handling, and the x86
 "integer indefinite" conversion rule all follow the Intel definitions.
 
+The SSE4.2 surface covers 64-bit compare (`_mm_cmpgt_epi64`), CRC32C
+(`_mm_crc32_u8/u16/u32/u64`), and population count (`_mm_popcnt_u32/u64`). The
+packed string-compare instructions (`_mm_cmpistr*`, `_mm_cmpestr*`) are not
+provided.
+
 ## Platform
 
 AArch64 only, little-endian. The intrinsics use NEON registers present on ARMv8.
-On other targets the crate compiles to an empty surface.
+On other targets the crate compiles to an empty surface. The crate is
+`#![no_std]` and pulls in no allocator.
 
 ## Types
 
