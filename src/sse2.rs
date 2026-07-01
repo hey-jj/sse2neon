@@ -296,6 +296,7 @@ pub fn _mm_cmplt_epi32(a: __m128i, b: __m128i) -> __m128i {
 /// Matches `_mm_slli_epi16`.
 #[inline]
 pub fn _mm_slli_epi16<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if !(0..16).contains(&IMM) {
         return _mm_setzero_si128();
     }
@@ -306,6 +307,7 @@ pub fn _mm_slli_epi16<const IMM: i32>(a: __m128i) -> __m128i {
 /// Matches `_mm_slli_epi32`.
 #[inline]
 pub fn _mm_slli_epi32<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if !(0..32).contains(&IMM) {
         return _mm_setzero_si128();
     }
@@ -316,6 +318,7 @@ pub fn _mm_slli_epi32<const IMM: i32>(a: __m128i) -> __m128i {
 /// Matches `_mm_slli_epi64`.
 #[inline]
 pub fn _mm_slli_epi64<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if !(0..64).contains(&IMM) {
         return _mm_setzero_si128();
     }
@@ -325,6 +328,7 @@ pub fn _mm_slli_epi64<const IMM: i32>(a: __m128i) -> __m128i {
 /// Logical shift eight `u16` lanes right by `IMM`. Matches `_mm_srli_epi16`.
 #[inline]
 pub fn _mm_srli_epi16<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if !(0..16).contains(&IMM) {
         return _mm_setzero_si128();
     }
@@ -334,6 +338,7 @@ pub fn _mm_srli_epi16<const IMM: i32>(a: __m128i) -> __m128i {
 /// Logical shift four `u32` lanes right by `IMM`. Matches `_mm_srli_epi32`.
 #[inline]
 pub fn _mm_srli_epi32<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if !(0..32).contains(&IMM) {
         return _mm_setzero_si128();
     }
@@ -343,6 +348,7 @@ pub fn _mm_srli_epi32<const IMM: i32>(a: __m128i) -> __m128i {
 /// Logical shift two `u64` lanes right by `IMM`. Matches `_mm_srli_epi64`.
 #[inline]
 pub fn _mm_srli_epi64<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if !(0..64).contains(&IMM) {
         return _mm_setzero_si128();
     }
@@ -353,7 +359,8 @@ pub fn _mm_srli_epi64<const IMM: i32>(a: __m128i) -> __m128i {
 /// Matches `_mm_srai_epi16`.
 #[inline]
 pub fn _mm_srai_epi16<const IMM: i32>(a: __m128i) -> __m128i {
-    let sh = if IMM > 15 { 15 } else { IMM };
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
+    let sh = IMM.clamp(0, 15);
     __m128i::from_s16(unsafe { vshlq_s16(a.s16(), vdupq_n_s16(-(sh as i16))) })
 }
 
@@ -361,13 +368,15 @@ pub fn _mm_srai_epi16<const IMM: i32>(a: __m128i) -> __m128i {
 /// Matches `_mm_srai_epi32`.
 #[inline]
 pub fn _mm_srai_epi32<const IMM: i32>(a: __m128i) -> __m128i {
-    let sh = if IMM > 31 { 31 } else { IMM };
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
+    let sh = IMM.clamp(0, 31);
     __m128i::from_s32(unsafe { vshlq_s32(a.s32(), vdupq_n_s32(-sh)) })
 }
 
 /// Shift the whole vector left by `IMM` bytes. Matches `_mm_slli_si128`.
 #[inline]
 pub fn _mm_slli_si128<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if IMM == 0 {
         return a;
     }
@@ -385,6 +394,7 @@ pub fn _mm_slli_si128<const IMM: i32>(a: __m128i) -> __m128i {
 /// Shift the whole vector right by `IMM` bytes. Matches `_mm_srli_si128`.
 #[inline]
 pub fn _mm_srli_si128<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if IMM == 0 {
         return a;
     }
@@ -493,9 +503,13 @@ pub fn _mm_move_epi64(a: __m128i) -> __m128i {
     }
 }
 
-/// Shuffle four `i32` lanes by immediate. Matches `_mm_shuffle_epi32`.
+/// Shuffle four `i32` lanes by `IMM`. Matches `_mm_shuffle_epi32`.
+///
+/// Each 2-bit field of `IMM` picks a source lane. `IMM` is a compile-time
+/// constant in `0..256`.
 #[inline]
 pub fn _mm_shuffle_epi32<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     let av = to_i32_array(a);
     let out = [
         av[(IMM & 0x3) as usize],
@@ -506,9 +520,11 @@ pub fn _mm_shuffle_epi32<const IMM: i32>(a: __m128i) -> __m128i {
     __m128i::from_s32(unsafe { vld1q_s32(out.as_ptr()) })
 }
 
-/// Shuffle the high four `i16` lanes, keep the low four. Matches `_mm_shufflehi_epi16`.
+/// Shuffle the high four `i16` lanes by `IMM`, keep the low four.
+/// Matches `_mm_shufflehi_epi16`. `IMM` is a compile-time constant in `0..256`.
 #[inline]
 pub fn _mm_shufflehi_epi16<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     let av = to_i16_array(a);
     let mut out = av;
     out[4] = av[4 + (IMM & 0x3) as usize];
@@ -518,9 +534,11 @@ pub fn _mm_shufflehi_epi16<const IMM: i32>(a: __m128i) -> __m128i {
     __m128i::from_s16(unsafe { vld1q_s16(out.as_ptr()) })
 }
 
-/// Shuffle the low four `i16` lanes, keep the high four. Matches `_mm_shufflelo_epi16`.
+/// Shuffle the low four `i16` lanes by `IMM`, keep the high four.
+/// Matches `_mm_shufflelo_epi16`. `IMM` is a compile-time constant in `0..256`.
 #[inline]
 pub fn _mm_shufflelo_epi16<const IMM: i32>(a: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     let av = to_i16_array(a);
     let mut out = av;
     out[0] = av[(IMM & 0x3) as usize];
@@ -1103,13 +1121,14 @@ pub fn _mm_cvtps_pd(a: __m128) -> __m128d {
     }
 }
 
-/// Convert two `f64` to two `i32` in the low lanes, round to nearest.
+/// Convert two `f64` to two `i32` in the low lanes using the MXCSR rounding mode.
 ///
-/// Out-of-range and NaN become `i32::MIN`. Matches `_mm_cvtpd_epi32`.
+/// The default mode rounds to nearest, ties to even. Out-of-range and NaN become
+/// `i32::MIN`. Matches `_mm_cvtpd_epi32`.
 #[inline]
 pub fn _mm_cvtpd_epi32(a: __m128d) -> __m128i {
-    let lo = cvtd_s32(_mm_cvtsd_f64(a));
-    let hi = cvtd_s32(unsafe { vgetq_lane_f64(a.f64(), 1) });
+    let lo = cvtd_s32(round_cur(_mm_cvtsd_f64(a)));
+    let hi = cvtd_s32(round_cur(unsafe { vgetq_lane_f64(a.f64(), 1) }));
     _mm_set_epi32(0, 0, hi, lo)
 }
 
@@ -1118,42 +1137,55 @@ pub fn _mm_cvtpd_epi32(a: __m128d) -> __m128i {
 /// Out-of-range and NaN become `i32::MIN`. Matches `_mm_cvttpd_epi32`.
 #[inline]
 pub fn _mm_cvttpd_epi32(a: __m128d) -> __m128i {
-    let lo = cvtd_s32(_mm_cvtsd_f64(a).trunc());
-    let hi = cvtd_s32(unsafe { vgetq_lane_f64(a.f64(), 1) }.trunc());
+    let lo = cvtd_s32(_mm_cvtsd_f64(a));
+    let hi = cvtd_s32(unsafe { vgetq_lane_f64(a.f64(), 1) });
     _mm_set_epi32(0, 0, hi, lo)
 }
 
-/// Convert lane 0 of `a` to `i32`, round to nearest. Matches `_mm_cvtsd_si32`.
+/// Convert lane 0 of `a` to `i32` using the MXCSR rounding mode.
+/// Matches `_mm_cvtsd_si32`.
 #[inline]
 pub fn _mm_cvtsd_si32(a: __m128d) -> i32 {
-    cvtd_s32(_mm_cvtsd_f64(a))
+    cvtd_s32(round_cur(_mm_cvtsd_f64(a)))
 }
 
 /// Convert lane 0 of `a` to `i32` by truncation. Matches `_mm_cvttsd_si32`.
 #[inline]
 pub fn _mm_cvttsd_si32(a: __m128d) -> i32 {
-    cvtd_s32(_mm_cvtsd_f64(a).trunc())
+    cvtd_s32(_mm_cvtsd_f64(a))
 }
 
-/// Round an `f64` to `i32` with the x86 out-of-range rule.
+/// Round an `f64` to an integral `f64` using the current FPCR rounding mode.
 ///
-/// NaN, infinity, and values outside `i32` range give `i32::MIN`.
+/// `vrndi_f64` reads the FPCR RMode field, so this tracks the MXCSR mode set
+/// through `_MM_SET_ROUNDING_MODE`. NaN and infinity pass through unchanged.
+#[inline]
+fn round_cur(v: f64) -> f64 {
+    unsafe { vget_lane_f64(vrndi_f64(vdup_n_f64(v)), 0) }
+}
+
+/// Range-check an integral-valued `f64` and cast to `i32` with the x86 rule.
+///
+/// The caller has already applied any rounding. NaN, infinity, and values
+/// outside `i32` range give `i32::MIN`. In range, the `as` cast is exact because
+/// the input is integral. Matches the x86 "integer indefinite" result.
 #[inline]
 fn cvtd_s32(v: f64) -> i32 {
     if v.is_nan() || v.is_infinite() || !(-2147483648.0..2147483648.0).contains(&v) {
         i32::MIN
     } else {
-        // Round half to even, matching the SSE default.
-        let r = v.round_ties_even();
-        r as i32
+        v as i32
     }
 }
 
 /// Convert lane 0 of `a` (`f64`) to `f32` in lane 0, upper lanes from `b`.
 /// Matches `_mm_cvtsd_ss`.
+///
+/// `vcvt_f32_f64` narrows using the current FPCR rounding mode, so the low bit
+/// matches x86 `cvtsd2ss` under directed rounding.
 #[inline]
 pub fn _mm_cvtsd_ss(a: __m128, b: __m128d) -> __m128 {
-    let v = _mm_cvtsd_f64(b) as f32;
+    let v = unsafe { vget_lane_f32(vcvt_f32_f64(vdupq_n_f64(_mm_cvtsd_f64(b))), 0) };
     unsafe { __m128::from_f32(vsetq_lane_f32(v, a.f32(), 0)) }
 }
 

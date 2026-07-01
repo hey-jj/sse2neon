@@ -14,6 +14,7 @@ use core::arch::aarch64::*;
 /// Bit `n` of `IMM` selects lane `n` from `b`, else from `a`.
 #[inline]
 pub fn _mm_blend_epi16<const IMM: i32>(a: __m128i, b: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     let av = to_i16_array(a);
     let bv = to_i16_array(b);
     let mut out = [0i16; 8];
@@ -26,6 +27,7 @@ pub fn _mm_blend_epi16<const IMM: i32>(a: __m128i, b: __m128i) -> __m128i {
 /// Blend two `f64` lanes by the immediate mask. Matches `_mm_blend_pd`.
 #[inline]
 pub fn _mm_blend_pd<const IMM: i32>(a: __m128d, b: __m128d) -> __m128d {
+    const { assert!(IMM >= 0 && IMM < 4, "IMM must be in 0..4") };
     unsafe {
         let a0 = vgetq_lane_f64(a.f64(), 0);
         let a1 = vgetq_lane_f64(a.f64(), 1);
@@ -40,6 +42,7 @@ pub fn _mm_blend_pd<const IMM: i32>(a: __m128d, b: __m128d) -> __m128d {
 /// Blend four `f32` lanes by the immediate mask. Matches `_mm_blend_ps`.
 #[inline]
 pub fn _mm_blend_ps<const IMM: i32>(a: __m128, b: __m128) -> __m128 {
+    const { assert!(IMM >= 0 && IMM < 16, "IMM must be in 0..16") };
     let mut av = [0.0f32; 4];
     let mut bv = [0.0f32; 4];
     unsafe {
@@ -89,6 +92,7 @@ pub fn _mm_blendv_pd(a: __m128d, b: __m128d, mask: __m128d) -> __m128d {
 /// `ROUNDING` uses the `_MM_FROUND_*` constants. The exception bits are ignored.
 #[inline]
 pub fn _mm_round_ps<const ROUNDING: i32>(a: __m128) -> __m128 {
+    const { assert!(ROUNDING >= 0 && ROUNDING < 16, "ROUNDING must be in 0..16") };
     let mode = ROUNDING & !(_MM_FROUND_RAISE_EXC | _MM_FROUND_NO_EXC);
     unsafe {
         let f = a.f32();
@@ -106,6 +110,7 @@ pub fn _mm_round_ps<const ROUNDING: i32>(a: __m128) -> __m128 {
 /// Round two `f64` lanes per the `ROUNDING` mode. Matches `_mm_round_pd`.
 #[inline]
 pub fn _mm_round_pd<const ROUNDING: i32>(a: __m128d) -> __m128d {
+    const { assert!(ROUNDING >= 0 && ROUNDING < 16, "ROUNDING must be in 0..16") };
     let mode = ROUNDING & !(_MM_FROUND_RAISE_EXC | _MM_FROUND_NO_EXC);
     unsafe {
         let f = a.f64();
@@ -345,6 +350,7 @@ pub fn _mm_minpos_epu16(a: __m128i) -> __m128i {
 /// lanes receive the sum.
 #[inline]
 pub fn _mm_dp_ps<const IMM: i32>(a: __m128, b: __m128) -> __m128 {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     let mut av = [0.0f32; 4];
     let mut bv = [0.0f32; 4];
     unsafe {
@@ -369,6 +375,7 @@ pub fn _mm_dp_ps<const IMM: i32>(a: __m128, b: __m128) -> __m128 {
 /// Dot product of two `f64` lanes with mask select. Matches `_mm_dp_pd`.
 #[inline]
 pub fn _mm_dp_pd<const IMM: i32>(a: __m128d, b: __m128d) -> __m128d {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     unsafe {
         let a0 = vgetq_lane_f64(a.f64(), 0);
         let a1 = vgetq_lane_f64(a.f64(), 1);
@@ -392,18 +399,21 @@ pub fn _mm_dp_pd<const IMM: i32>(a: __m128d, b: __m128d) -> __m128d {
 /// Extract one `i8` lane, zero-extended. Matches `_mm_extract_epi8`.
 #[inline]
 pub fn _mm_extract_epi8<const IMM: i32>(a: __m128i) -> i32 {
+    const { assert!(IMM >= 0 && IMM < 16, "IMM must be in 0..16") };
     to_u8_array(a)[(IMM & 0xf) as usize] as i32
 }
 
 /// Extract one `i32` lane. Matches `_mm_extract_epi32`.
 #[inline]
 pub fn _mm_extract_epi32<const IMM: i32>(a: __m128i) -> i32 {
+    const { assert!(IMM >= 0 && IMM < 4, "IMM must be in 0..4") };
     to_i32_array(a)[(IMM & 0x3) as usize]
 }
 
 /// Extract one `i64` lane. Matches `_mm_extract_epi64`.
 #[inline]
 pub fn _mm_extract_epi64<const IMM: i32>(a: __m128i) -> i64 {
+    const { assert!(IMM >= 0 && IMM < 2, "IMM must be in 0..2") };
     let mut vals = [0i64; 2];
     unsafe { vst1q_s64(vals.as_mut_ptr(), a.s64()) };
     vals[(IMM & 0x1) as usize]
@@ -412,12 +422,14 @@ pub fn _mm_extract_epi64<const IMM: i32>(a: __m128i) -> i64 {
 /// Extract one `i16` lane, zero-extended. Matches `_mm_extract_epi16`.
 #[inline]
 pub fn _mm_extract_epi16<const IMM: i32>(a: __m128i) -> i32 {
+    const { assert!(IMM >= 0 && IMM < 8, "IMM must be in 0..8") };
     to_i16_array(a)[(IMM & 0x7) as usize] as u16 as i32
 }
 
 /// Insert `i` into one `i8` lane. Matches `_mm_insert_epi8`.
 #[inline]
 pub fn _mm_insert_epi8<const IMM: i32>(a: __m128i, i: i32) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 16, "IMM must be in 0..16") };
     let mut vals = to_u8_array(a);
     vals[(IMM & 0xf) as usize] = i as u8;
     __m128i::from_u8(unsafe { vld1q_u8(vals.as_ptr()) })
@@ -426,6 +438,7 @@ pub fn _mm_insert_epi8<const IMM: i32>(a: __m128i, i: i32) -> __m128i {
 /// Insert `i` into one `i32` lane. Matches `_mm_insert_epi32`.
 #[inline]
 pub fn _mm_insert_epi32<const IMM: i32>(a: __m128i, i: i32) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 4, "IMM must be in 0..4") };
     let mut vals = to_i32_array(a);
     vals[(IMM & 0x3) as usize] = i;
     __m128i::from_s32(unsafe { vld1q_s32(vals.as_ptr()) })
@@ -434,6 +447,7 @@ pub fn _mm_insert_epi32<const IMM: i32>(a: __m128i, i: i32) -> __m128i {
 /// Insert `i` into one `i64` lane. Matches `_mm_insert_epi64`.
 #[inline]
 pub fn _mm_insert_epi64<const IMM: i32>(a: __m128i, i: i64) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 2, "IMM must be in 0..2") };
     let mut vals = [0i64; 2];
     unsafe { vst1q_s64(vals.as_mut_ptr(), a.s64()) };
     vals[(IMM & 0x1) as usize] = i;
@@ -443,6 +457,7 @@ pub fn _mm_insert_epi64<const IMM: i32>(a: __m128i, i: i64) -> __m128i {
 /// Insert `i` into one `i16` lane. Matches `_mm_insert_epi16`.
 #[inline]
 pub fn _mm_insert_epi16<const IMM: i32>(a: __m128i, i: i32) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 8, "IMM must be in 0..8") };
     let mut vals = to_i16_array(a);
     vals[(IMM & 0x7) as usize] = i as i16;
     __m128i::from_s16(unsafe { vld1q_s16(vals.as_ptr()) })

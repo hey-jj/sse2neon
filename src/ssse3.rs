@@ -162,6 +162,7 @@ pub fn _mm_mulhrs_epi16(a: __m128i, b: __m128i) -> __m128i {
 /// Matches `_mm_alignr_epi8`.
 #[inline]
 pub fn _mm_alignr_epi8<const IMM: i32>(a: __m128i, b: __m128i) -> __m128i {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     if IMM >= 32 {
         return _mm_setzero_si128();
     }

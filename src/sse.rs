@@ -380,11 +380,12 @@ pub fn _mm_unpacklo_ps(a: __m128, b: __m128) -> __m128 {
     __m128::from_f32(unsafe { vzip1q_f32(a.f32(), b.f32()) })
 }
 
-/// Shuffle four `f32` lanes. `imm` picks lanes 0-1 from `a`, 2-3 from `b`.
+/// Shuffle four `f32` lanes. `IMM` picks lanes 0-1 from `a`, 2-3 from `b`.
 ///
 /// Matches `_mm_shuffle_ps`. `IMM` is a compile-time constant in `0..256`.
 #[inline]
 pub fn _mm_shuffle_ps<const IMM: i32>(a: __m128, b: __m128) -> __m128 {
+    const { assert!(IMM >= 0 && IMM < 256, "IMM must be in 0..256") };
     let mut out = [0.0f32; 4];
     let av = to_f32_array(a);
     let bv = to_f32_array(b);
