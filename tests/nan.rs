@@ -148,3 +148,22 @@ fn min_max_pd_never_invent_nan_from_finite() {
     assert_eq!(f64x2(_mm_min_pd(a, b))[0], 3.0);
     assert_eq!(f64x2(_mm_max_pd(a, b))[0], 5.0);
 }
+
+#[test]
+fn min_max_signed_zero_orders_by_sign() {
+    // NEON min/max order -0.0 below +0.0 regardless of operand position. x86
+    // MINPS/MAXPS return the second operand on a signed-zero tie, so the two
+    // diverge for min(-0, +0) and max(+0, -0).
+    let neg = _mm_set1_ps(-0.0);
+    let pos = _mm_set1_ps(0.0);
+    assert_eq!(
+        f32x4(_mm_min_ps(neg, pos))[0].to_bits(),
+        (-0.0f32).to_bits()
+    );
+    assert_eq!(
+        f32x4(_mm_min_ps(pos, neg))[0].to_bits(),
+        (-0.0f32).to_bits()
+    );
+    assert_eq!(f32x4(_mm_max_ps(neg, pos))[0].to_bits(), 0.0f32.to_bits());
+    assert_eq!(f32x4(_mm_max_ps(pos, neg))[0].to_bits(), 0.0f32.to_bits());
+}
