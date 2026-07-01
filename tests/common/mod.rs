@@ -1,10 +1,9 @@
 //! Shared test helpers: deterministic PRNG, lane readers, and scalar oracles.
 //!
-//! The PRNG matches the SplitMix64 stream used by the reference conformance
-//! suite so inputs are reproducible. Lane readers pull typed views out of the
-//! vector types. Scalar oracles restate the x86 semantics independently of the
-//! NEON implementation, so a test compares the intrinsic against a separate
-//! source of truth.
+//! The PRNG is a fixed SplitMix64 stream, so inputs are reproducible across
+//! runs. Lane readers pull typed views out of the vector types. Scalar oracles
+//! restate the x86 semantics independently of the NEON implementation, so a
+//! test compares the intrinsic against a separate source of truth.
 
 #![allow(dead_code)]
 
@@ -41,10 +40,10 @@ impl SplitMix64 {
     }
 }
 
-/// Generate the reference float and int input streams.
+/// Generate the float and int input streams that drive the conformance tests.
 ///
-/// Matches the reference suite: 10000 floats and ints drawn uniformly from
-/// `[-100000, 100000)` with seed 123456.
+/// 10000 floats then 10000 ints, each drawn uniformly from `[-100000, 100000)`
+/// with seed 123456.
 pub fn test_streams() -> (Vec<f32>, Vec<i32>) {
     let mut rng = SplitMix64::new(123456);
     let mut floats = Vec::with_capacity(10000);

@@ -43,8 +43,16 @@ ps_binop_test!(add_ps, _mm_add_ps, |a: f32, b: f32| a + b);
 ps_binop_test!(sub_ps, _mm_sub_ps, |a: f32, b: f32| a - b);
 ps_binop_test!(mul_ps, _mm_mul_ps, |a: f32, b: f32| a * b);
 ps_binop_test!(div_ps, _mm_div_ps, |a: f32, b: f32| a / b);
-ps_binop_test!(min_ps, _mm_min_ps, |a: f32, b: f32| if a < b { a } else { b });
-ps_binop_test!(max_ps, _mm_max_ps, |a: f32, b: f32| if a > b { a } else { b });
+ps_binop_test!(min_ps, _mm_min_ps, |a: f32, b: f32| if a < b {
+    a
+} else {
+    b
+});
+ps_binop_test!(max_ps, _mm_max_ps, |a: f32, b: f32| if a > b {
+    a
+} else {
+    b
+});
 
 macro_rules! ps_cmp_test {
     ($name:ident, $intr:ident, $op:expr) => {
