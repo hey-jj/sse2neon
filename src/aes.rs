@@ -231,16 +231,9 @@ fn sub_word(w: u32) -> u32 {
 /// The 128-bit product has no carries between bit positions.
 #[inline]
 pub fn _mm_clmulepi64_si128<const IMM: i32>(a: __m128i, b: __m128i) -> __m128i {
-    let av = crate::sse2::_mm_cvtsi128_si64(if IMM & 0x01 == 1 {
-        high_i64(a)
-    } else {
-        a
-    }) as u64;
-    let bv = crate::sse2::_mm_cvtsi128_si64(if IMM & 0x10 == 0x10 {
-        high_i64(b)
-    } else {
-        b
-    }) as u64;
+    let av = crate::sse2::_mm_cvtsi128_si64(if IMM & 0x01 == 1 { high_i64(a) } else { a }) as u64;
+    let bv =
+        crate::sse2::_mm_cvtsi128_si64(if IMM & 0x10 == 0x10 { high_i64(b) } else { b }) as u64;
     let product = clmul64(av, bv);
     crate::sse2::_mm_set_epi64x(product.1 as i64, product.0 as i64)
 }

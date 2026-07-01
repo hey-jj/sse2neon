@@ -177,18 +177,66 @@ macro_rules! ss_cmp {
     };
 }
 
-ss_cmp!(_mm_cmpeq_ss, _mm_cmpeq_ps, "Scalar `==` on lane 0. Matches `_mm_cmpeq_ss`.");
-ss_cmp!(_mm_cmpge_ss, _mm_cmpge_ps, "Scalar `>=` on lane 0. Matches `_mm_cmpge_ss`.");
-ss_cmp!(_mm_cmpgt_ss, _mm_cmpgt_ps, "Scalar `>` on lane 0. Matches `_mm_cmpgt_ss`.");
-ss_cmp!(_mm_cmple_ss, _mm_cmple_ps, "Scalar `<=` on lane 0. Matches `_mm_cmple_ss`.");
-ss_cmp!(_mm_cmplt_ss, _mm_cmplt_ps, "Scalar `<` on lane 0. Matches `_mm_cmplt_ss`.");
-ss_cmp!(_mm_cmpneq_ss, _mm_cmpneq_ps, "Scalar `!=` on lane 0. Matches `_mm_cmpneq_ss`.");
-ss_cmp!(_mm_cmpnge_ss, _mm_cmpnge_ps, "Scalar `!(>=)` on lane 0. Matches `_mm_cmpnge_ss`.");
-ss_cmp!(_mm_cmpngt_ss, _mm_cmpngt_ps, "Scalar `!(>)` on lane 0. Matches `_mm_cmpngt_ss`.");
-ss_cmp!(_mm_cmpnle_ss, _mm_cmpnle_ps, "Scalar `!(<=)` on lane 0. Matches `_mm_cmpnle_ss`.");
-ss_cmp!(_mm_cmpnlt_ss, _mm_cmpnlt_ps, "Scalar `!(<)` on lane 0. Matches `_mm_cmpnlt_ss`.");
-ss_cmp!(_mm_cmpord_ss, _mm_cmpord_ps, "Scalar ordered test on lane 0. Matches `_mm_cmpord_ss`.");
-ss_cmp!(_mm_cmpunord_ss, _mm_cmpunord_ps, "Scalar unordered test on lane 0. Matches `_mm_cmpunord_ss`.");
+ss_cmp!(
+    _mm_cmpeq_ss,
+    _mm_cmpeq_ps,
+    "Scalar `==` on lane 0. Matches `_mm_cmpeq_ss`."
+);
+ss_cmp!(
+    _mm_cmpge_ss,
+    _mm_cmpge_ps,
+    "Scalar `>=` on lane 0. Matches `_mm_cmpge_ss`."
+);
+ss_cmp!(
+    _mm_cmpgt_ss,
+    _mm_cmpgt_ps,
+    "Scalar `>` on lane 0. Matches `_mm_cmpgt_ss`."
+);
+ss_cmp!(
+    _mm_cmple_ss,
+    _mm_cmple_ps,
+    "Scalar `<=` on lane 0. Matches `_mm_cmple_ss`."
+);
+ss_cmp!(
+    _mm_cmplt_ss,
+    _mm_cmplt_ps,
+    "Scalar `<` on lane 0. Matches `_mm_cmplt_ss`."
+);
+ss_cmp!(
+    _mm_cmpneq_ss,
+    _mm_cmpneq_ps,
+    "Scalar `!=` on lane 0. Matches `_mm_cmpneq_ss`."
+);
+ss_cmp!(
+    _mm_cmpnge_ss,
+    _mm_cmpnge_ps,
+    "Scalar `!(>=)` on lane 0. Matches `_mm_cmpnge_ss`."
+);
+ss_cmp!(
+    _mm_cmpngt_ss,
+    _mm_cmpngt_ps,
+    "Scalar `!(>)` on lane 0. Matches `_mm_cmpngt_ss`."
+);
+ss_cmp!(
+    _mm_cmpnle_ss,
+    _mm_cmpnle_ps,
+    "Scalar `!(<=)` on lane 0. Matches `_mm_cmpnle_ss`."
+);
+ss_cmp!(
+    _mm_cmpnlt_ss,
+    _mm_cmpnlt_ps,
+    "Scalar `!(<)` on lane 0. Matches `_mm_cmpnlt_ss`."
+);
+ss_cmp!(
+    _mm_cmpord_ss,
+    _mm_cmpord_ps,
+    "Scalar ordered test on lane 0. Matches `_mm_cmpord_ss`."
+);
+ss_cmp!(
+    _mm_cmpunord_ss,
+    _mm_cmpunord_ps,
+    "Scalar unordered test on lane 0. Matches `_mm_cmpunord_ss`."
+);
 
 // --- Ordered scalar compares returning int ---
 
