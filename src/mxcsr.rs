@@ -103,19 +103,26 @@ pub fn _MM_SET_DENORMALS_ZERO_MODE(mode: u32) {
     write_fpcr(next);
 }
 
-/// Read the MXCSR register value. Reports rounding and flush-zero modes.
+/// Read the MXCSR register value. Reports rounding, FTZ, and DAZ modes.
 ///
+/// FPCR bit 24 backs both FTZ and DAZ, so when it is set both bits are reported.
 /// Exception flags are always zero. Matches `_mm_getcsr`.
 #[inline]
 pub fn _mm_getcsr() -> u32 {
-    _MM_GET_ROUNDING_MODE() | _MM_GET_FLUSH_ZERO_MODE()
+    _MM_GET_ROUNDING_MODE() | _MM_GET_FLUSH_ZERO_MODE() | _MM_GET_DENORMALS_ZERO_MODE()
 }
 
-/// Write the MXCSR register. Applies the rounding and flush-zero fields.
+/// Write the MXCSR register. Applies the rounding, FTZ, and DAZ fields.
 ///
+/// FPCR bit 24 backs both FTZ and DAZ, so either bit in the input word sets it.
 /// Exception flags and masks are ignored. Matches `_mm_setcsr`.
 #[inline]
 pub fn _mm_setcsr(a: u32) {
     _MM_SET_ROUNDING_MODE(a & _MM_ROUND_MASK);
-    _MM_SET_FLUSH_ZERO_MODE(a & _MM_FLUSH_ZERO_MASK);
+    let flush = (a & _MM_FLUSH_ZERO_MASK != 0) || (a & _MM_DENORMALS_ZERO_MASK != 0);
+    _MM_SET_FLUSH_ZERO_MODE(if flush {
+        _MM_FLUSH_ZERO_ON
+    } else {
+        _MM_FLUSH_ZERO_OFF
+    });
 }
