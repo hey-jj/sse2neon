@@ -6,6 +6,11 @@
 //! little-endian memory ordering. Code written for x86 SIMD can call these
 //! functions and get matching results on AArch64.
 //!
+//! The SSE4.2 surface covers 64-bit compare (`_mm_cmpgt_epi64`), CRC32C
+//! (`_mm_crc32_u8/u16/u32/u64`), and population count (`_mm_popcnt_u32/u64`).
+//! The packed string-compare instructions (`_mm_cmpistr*` and `_mm_cmpestr*`)
+//! are not provided.
+//!
 //! # Types
 //!
 //! Four vector types match the Intel ABI. Each wraps a NEON register:
@@ -33,7 +38,14 @@
 //! carry no memory-safety preconditions when the target supports NEON, which is
 //! guaranteed on AArch64. Load and store functions that take raw pointers are
 //! marked `unsafe` and document their alignment and length requirements.
+//!
+//! # no_std
+//!
+//! The crate is `#![no_std]`. It depends only on `core::arch::aarch64` and pulls
+//! in no allocator. Rounding for the float-to-int conversions uses NEON rounding
+//! ops that read the FPCR mode, so no libm dependency is needed.
 
+#![no_std]
 #![cfg(target_arch = "aarch64")]
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
