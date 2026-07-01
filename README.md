@@ -5,8 +5,15 @@ x86 SSE-family SIMD intrinsics reimplemented on ARM NEON.
 The crate mirrors the Intel `_mm_*` intrinsic surface on top of
 `core::arch::aarch64` NEON. Code written against x86 SSE, SSE2, SSE3, SSSE3,
 SSE4.1, SSE4.2, AES, and CRC32C can call these functions and get matching lane
-semantics on AArch64. Lane ordering, saturation, NaN handling, and the x86
-"integer indefinite" conversion rule all follow the Intel definitions.
+semantics on AArch64. Lane ordering, saturation, arithmetic NaN handling, and
+the x86 "integer indefinite" conversion rule all follow the Intel definitions.
+
+The float min/max functions (`_mm_min_ps`, `_mm_max_ps`, `_mm_min_pd`,
+`_mm_max_pd`, and the `_ss` scalar forms) are the exception. They use the NEON
+min/max, which propagate a NaN operand and order `-0.0` below `+0.0`. x86 MINPS,
+MAXPS, MINPD, and MAXPD instead compute `(a OP b) ? a : b`, so they return the
+second operand on an unordered compare and on a signed-zero tie. `_mm_min_ps`
+here returns `NaN` for `min(NaN, 5.0)` where x86 returns `5.0`.
 
 The SSE4.2 surface covers 64-bit compare (`_mm_cmpgt_epi64`), CRC32C
 (`_mm_crc32_u8/u16/u32/u64`), and population count (`_mm_popcnt_u32/u64`). The

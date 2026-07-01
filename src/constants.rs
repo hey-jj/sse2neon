@@ -2,6 +2,10 @@
 //!
 //! These mirror the `_MM_*` and `_SIDD_*` values from the Intel headers. Shuffle
 //! immediates use [`_MM_SHUFFLE`] to pack four 2-bit lane selectors.
+//!
+//! The `_MM_HINT_*` and `_SIDD_*` values exist for source parity. Their matching
+//! functions (`_mm_prefetch` and the `_mm_cmpistr*`/`_mm_cmpestr*` string
+//! compares) are not provided, so these constants have no effect here.
 
 /// Pack four 2-bit lane selectors into a shuffle immediate.
 ///
