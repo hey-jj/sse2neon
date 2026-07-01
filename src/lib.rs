@@ -41,6 +41,8 @@
 
 mod aes;
 mod constants;
+mod mmx;
+mod mxcsr;
 mod sse;
 mod sse2;
 mod sse3;
@@ -51,6 +53,8 @@ mod types;
 
 pub use aes::*;
 pub use constants::*;
+pub use mmx::*;
+pub use mxcsr::*;
 pub use sse::*;
 pub use sse2::*;
 pub use sse3::*;

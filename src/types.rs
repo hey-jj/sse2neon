@@ -129,6 +129,45 @@ impl __m128i {
     }
 }
 
+impl __m64 {
+    #[inline(always)]
+    pub(crate) fn from_s8(v: int8x8_t) -> Self {
+        __m64(unsafe { vreinterpret_s64_s8(v) })
+    }
+    #[inline(always)]
+    pub(crate) fn u8(self) -> uint8x8_t {
+        unsafe { vreinterpret_u8_s64(self.0) }
+    }
+    #[inline(always)]
+    pub(crate) fn from_u8(v: uint8x8_t) -> Self {
+        __m64(unsafe { vreinterpret_s64_u8(v) })
+    }
+    #[inline(always)]
+    pub(crate) fn s16(self) -> int16x4_t {
+        unsafe { vreinterpret_s16_s64(self.0) }
+    }
+    #[inline(always)]
+    pub(crate) fn from_s16(v: int16x4_t) -> Self {
+        __m64(unsafe { vreinterpret_s64_s16(v) })
+    }
+    #[inline(always)]
+    pub(crate) fn u16(self) -> uint16x4_t {
+        unsafe { vreinterpret_u16_s64(self.0) }
+    }
+    #[inline(always)]
+    pub(crate) fn from_u16(v: uint16x4_t) -> Self {
+        __m64(unsafe { vreinterpret_s64_u16(v) })
+    }
+    #[inline(always)]
+    pub(crate) fn s32(self) -> int32x2_t {
+        unsafe { vreinterpret_s32_s64(self.0) }
+    }
+    #[inline(always)]
+    pub(crate) fn from_s32(v: int32x2_t) -> Self {
+        __m64(unsafe { vreinterpret_s64_s32(v) })
+    }
+}
+
 impl __m128d {
     #[inline(always)]
     pub(crate) fn f64(self) -> float64x2_t {

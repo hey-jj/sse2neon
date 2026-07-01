@@ -1038,14 +1038,21 @@ fn cvtps_epi32_fixup(f: float32x4_t, cvt: int32x4_t) -> int32x4_t {
     }
 }
 
-/// Convert four `f32` to `i32`, round to nearest, ties to even.
+/// Convert four `f32` to `i32` using the current MXCSR rounding mode.
 ///
-/// Out-of-range and NaN lanes become `i32::MIN`. Matches `_mm_cvtps_epi32`.
+/// The default mode rounds to nearest, ties to even. Out-of-range and NaN lanes
+/// become `i32::MIN`. Matches `_mm_cvtps_epi32`.
 #[inline]
 pub fn _mm_cvtps_epi32(a: __m128) -> __m128i {
+    use crate::mxcsr::_MM_GET_ROUNDING_MODE;
     unsafe {
         let f = a.f32();
-        let cvt = vcvtnq_s32_f32(f);
+        let cvt = match _MM_GET_ROUNDING_MODE() {
+            crate::constants::_MM_ROUND_NEAREST => vcvtnq_s32_f32(f),
+            crate::constants::_MM_ROUND_DOWN => vcvtmq_s32_f32(f),
+            crate::constants::_MM_ROUND_UP => vcvtpq_s32_f32(f),
+            _ => vcvtq_s32_f32(f),
+        };
         __m128i::from_s32(cvtps_epi32_fixup(f, cvt))
     }
 }
