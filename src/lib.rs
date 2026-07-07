@@ -2,9 +2,9 @@
 //!
 //! This crate mirrors the Intel `_mm_*` intrinsic surface (SSE, SSE2, SSE3,
 //! SSSE3, SSE4.1, SSE4.2, AES, CRC32C) on top of `core::arch::aarch64` NEON.
-//! Each function reproduces the observable x86 lane semantics under
-//! little-endian memory ordering. Code written for x86 SIMD can call these
-//! functions and get matching results on AArch64.
+//! Most functions reproduce the observable x86 lane semantics under
+//! little-endian memory ordering. The float min/max functions use NEON min/max:
+//! they propagate NaN operands and order `-0.0` below `+0.0`.
 //!
 //! The SSE4.2 surface covers 64-bit compare (`_mm_cmpgt_epi64`), CRC32C
 //! (`_mm_crc32_u8/u16/u32/u64`), and population count (`_mm_popcnt_u32/u64`).
