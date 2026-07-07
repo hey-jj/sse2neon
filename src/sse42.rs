@@ -34,7 +34,7 @@ const CRC32C_TABLE: [u32; 16] = [
 
 /// Accumulate one byte into a CRC-32C checksum. Matches `_mm_crc32_u8`.
 ///
-/// Uses the reflected Castagnoli polynomial `0x1EDC6F41`.
+/// Uses the reflected Castagnoli polynomial `0x82F63B78`.
 #[inline]
 pub fn _mm_crc32_u8(mut crc: u32, v: u8) -> u32 {
     crc ^= v as u32;
