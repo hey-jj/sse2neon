@@ -699,7 +699,7 @@ pub unsafe fn _mm_loadu_si128(p: *const __m128i) -> __m128i {
 /// `p` must point to 8 readable bytes.
 #[inline]
 pub unsafe fn _mm_loadl_epi64(p: *const __m128i) -> __m128i {
-    let lo = *(p as *const i64);
+    let lo = core::ptr::read_unaligned(p as *const i64);
     __m128i::from_s64(vsetq_lane_s64(0, vdupq_n_s64(lo), 1))
 }
 
@@ -727,7 +727,7 @@ pub unsafe fn _mm_storeu_si128(p: *mut __m128i, a: __m128i) {
 /// `p` must point to 8 writable bytes.
 #[inline]
 pub unsafe fn _mm_storel_epi64(p: *mut __m128i, a: __m128i) {
-    *(p as *mut i64) = vgetq_lane_s64(a.s64(), 0);
+    core::ptr::write_unaligned(p as *mut i64, vgetq_lane_s64(a.s64(), 0));
 }
 
 /// Extract the low `i32` lane. Matches `_mm_cvtsi128_si32`.
@@ -808,13 +808,15 @@ pub fn _mm_sqrt_pd(a: __m128d) -> __m128d {
     __m128d::from_f64(unsafe { vsqrtq_f64(a.f64()) })
 }
 
-/// Packed maximum of two `f64` lanes. NaN follows NEON. Matches `_mm_max_pd`.
+/// Packed maximum of two `f64` lanes.
+/// Uses NEON max: a NaN operand propagates, and `-0.0` is below `+0.0`.
 #[inline]
 pub fn _mm_max_pd(a: __m128d, b: __m128d) -> __m128d {
     __m128d::from_f64(unsafe { vmaxq_f64(a.f64(), b.f64()) })
 }
 
-/// Packed minimum of two `f64` lanes. NaN follows NEON. Matches `_mm_min_pd`.
+/// Packed minimum of two `f64` lanes.
+/// Uses NEON min: a NaN operand propagates, and `-0.0` is below `+0.0`.
 #[inline]
 pub fn _mm_min_pd(a: __m128d, b: __m128d) -> __m128d {
     __m128d::from_f64(unsafe { vminq_f64(a.f64(), b.f64()) })

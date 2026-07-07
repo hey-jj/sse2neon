@@ -311,25 +311,29 @@ pub fn _mm_ucomineq_ss(a: __m128, b: __m128) -> i32 {
 
 // --- Min / max ---
 
-/// Packed maximum. NaN handling follows NEON, not IEEE. Matches `_mm_max_ps`.
+/// Packed maximum.
+/// Uses NEON max: a NaN operand propagates, and `-0.0` is below `+0.0`.
 #[inline]
 pub fn _mm_max_ps(a: __m128, b: __m128) -> __m128 {
     __m128::from_f32(unsafe { vmaxq_f32(a.f32(), b.f32()) })
 }
 
-/// Packed minimum. NaN handling follows NEON, not IEEE. Matches `_mm_min_ps`.
+/// Packed minimum.
+/// Uses NEON min: a NaN operand propagates, and `-0.0` is below `+0.0`.
 #[inline]
 pub fn _mm_min_ps(a: __m128, b: __m128) -> __m128 {
     __m128::from_f32(unsafe { vminq_f32(a.f32(), b.f32()) })
 }
 
-/// Scalar maximum on lane 0, upper lanes from `a`. Matches `_mm_max_ss`.
+/// Scalar maximum on lane 0. Upper lanes come from `a`.
+/// Uses NEON max on lane 0: a NaN operand propagates, and `-0.0` is below `+0.0`.
 #[inline]
 pub fn _mm_max_ss(a: __m128, b: __m128) -> __m128 {
     _mm_move_ss(a, _mm_max_ps(a, b))
 }
 
-/// Scalar minimum on lane 0, upper lanes from `a`. Matches `_mm_min_ss`.
+/// Scalar minimum on lane 0. Upper lanes come from `a`.
+/// Uses NEON min on lane 0: a NaN operand propagates, and `-0.0` is below `+0.0`.
 #[inline]
 pub fn _mm_min_ss(a: __m128, b: __m128) -> __m128 {
     _mm_move_ss(a, _mm_min_ps(a, b))
